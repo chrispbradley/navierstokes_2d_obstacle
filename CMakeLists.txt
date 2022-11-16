@@ -4,6 +4,11 @@
 # is not the case so we may as well stop right here.
 cmake_minimum_required(VERSION 3.4 FATAL_ERROR)
 
+# Set OPENCMISS_TOOLCHAIN
+if (DEFINED OpenCMISSLibs_DIR)
+  set(CMAKE_PROJECT_INCLUDE_BEFORE ${OpenCMISSLibs_DIR}/opencmisslibs-preconfig.cmake)
+endif ()  
+
 # Declare the project name and version number and specify the languages
 # used.  We must specify the *C* language irrespective of whether we use 
 # it or not as it is required by MPI.
