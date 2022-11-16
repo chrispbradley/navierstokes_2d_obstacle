@@ -1,0 +1,121 @@
+gfx read elem ./output/Fluid/Fluid0.part0.exelem region FluidRegion;
+gfx read node ./output/Fluid/Fluid0.part0.exnode region FluidRegion;
+gfx read elem ./output/Solid/Solid0.part0.exelem region SolidRegion;
+gfx read node ./output/Solid/Solid0.part0.exnode region SolidRegion;
+gfx read elem ./output/Interface/Interface0.part0.exelem region Interface;
+gfx read node ./output/Interface/Interface0.part0.exnode region Interface;
+
+gfx define faces egroup FluidRegion
+gfx define faces egroup SolidRegion
+gfx define faces egroup Interface
+
+#Create the graphics window and set view angles
+gfx create window 1
+gfx modify window 1 layout 2d ortho_axes x y eye_spacing 0.25 height 1000 width 2000 
+gfx modify window 1 view eye_point 1.50 0.70 3.5 interest_point 1.50 0.70 0.0 up_vector 0.0 1.0 0.0 view_angle 40.0 near_clipping_plane 0.00001 far_clipping_plane 100.0
+
+#Define the various fields
+gfx define field FluidRegion/FluidVelocities component FluidDependent.1 FluidDependent.2
+gfx define field FluidRegion/FluidPressure component FluidDependent.3
+
+gfx define field FluidRegion/FluidVelocityMagnitude magnitude field FluidVelocities
+
+gfx define field SolidRegion/SolidDeformed component SolidDependent.1 SolidDependent.2
+gfx define field SolidRegion/SolidPressure component SolidDependent.3
+
+gfx define field SolidRegion/SolidReaction component SolidTraction.1 SolidTraction.2
+
+gfx define field SolidRegion/SolidReactionMagnitude magnitude field SolidReaction
+
+gfx define field Interface/Lagrange component InterfaceLagrange.1 InterfaceLagrange.2
+
+gfx define field Interface/LagrangeMagnitude magnitude field Lagrange
+
+#Create all the materials
+
+gfx create material Solid normal_mode ambient 0.3 0.3 0.3 diffuse 0 0 0 emission 0 0 0 specular 0.3 0.3 0.3 shininess 0.2;
+
+gfx create material TransparentSolid normal_mode ambient 0.3 0.3 0.3 diffuse 0 0 0 emission 0 0 0 specular 0.3 0.3 0.3 alpha 0.8 shininess 0.2;
+
+#Create all the spectrums
+gfx create spectrum FluidFlow
+gfx modify spectrum FluidFlow clear overwrite_colour
+gfx modify spectrum FluidFlow linear reverse range 0.0 0.90 extend_above extend_below rainbow colour_range 0 1
+
+gfx create spectrum FluidPressure
+gfx modify spectrum FluidPressure clear overwrite_colour
+gfx modify spectrum FluidPressure linear reverse range -15.0 21.0 extend_above extend_below rainbow colour_range 0 1
+
+gfx create spectrum WallShearStress
+gfx modify spectrum WallShearStress clear overwrite_colour
+gfx modify spectrum WallShearStress linear reverse range -15.0 21.0 extend_above extend_below rainbow colour_range 0 1
+
+gfx create spectrum SolidPressure
+gfx modify spectrum SolidPressure clear overwrite_colour
+gfx modify spectrum SolidPressure linear reverse range -35.0 150.0 extend_above extend_below rainbow colour_range 0 1
+
+gfx create spectrum SolidReaction
+gfx modify spectrum SolidReaction clear overwrite_colour
+gfx modify spectrum SolidReaction linear reverse range 0.0 1.00 extend_above extend_below rainbow colour_range 0 1
+
+gfx create spectrum Lagrange
+gfx modify spectrum Lagrange clear overwrite_colour
+gfx modify spectrum Lagrange linear reverse range 0.0 125.0 extend_above extend_below rainbow colour_range 0 1
+
+#Display lines
+gfx modify g_element FluidRegion lines coordinate FluidGeometry 
+gfx modify g_element SolidRegion lines coordinate SolidGeometry material yellow
+
+#Display flow glyphs
+gfx modify g_element FluidRegion node_points glyph arrow_solid general size "0.01*0.01*0.0" centre 0,0,0 font default orientation FluidVelocities select_on material default data FluidVelocityMagnitude scale_factors "0.1*0.01*0.00" selected_material default_selected spectrum FluidFlow
+
+#Display fluid pressure on the solid
+gfx modify g_element FluidRegion surfaces select_on material default data FluidPressure spectrum FluidPressure selected_material default_selected render_shaded;
+
+#Display fluid wall shear stress
+gfx modify g_element FluidRegion surfaces select_on material default data Wss spectrum WallShearStress selected_material default_selected render_shaded;
+
+#Display deformed solid lines
+gfx modify g_element SolidRegion lines coordinate SolidDeformed line_width 5 material red 
+
+#Display deformed solid outer surface
+#gfx modify g_element SolidRegion surfaces coordinate SolidDeformed select_on material default selected_material default_selected render_shaded;
+#gfx modify g_element SolidRegion surfaces coordinate SolidDeformed exterior face xi3_1 select_on material TransparentSolid selected_material default_selected render_shaded;
+
+#Display solid hydrostatic pressure 
+gfx modify g_element SolidRegion surfaces coordinate SolidDeformed select_on material default data SolidPressure spectrum SolidPressure selected_material default_selected render_shaded;
+
+#Display solid reactions
+gfx modify g_element SolidRegion node_points glyph arrow_solid general size "0.05*0.05*0.00" centre 0,0,0 font default orientation SolidReaction select_on material default data SolidReactionMagnitude scale_factors "0.05*0.01*0.00" selected_material default_selected spectrum SolidReaction
+
+#Display Lagrange surface
+#gfx modify g_element Interface surfaces select_on material default data LagrangeMagnitude selected_material default_selected spectrum Lagrange
+
+#Display Lagrange glyphs
+gfx modify g_element Interface node_points glyph arrow_solid general size "0.005*0.005*0.0" centre 0,0,0 font default orientation Lagrange select_on material default data LagrangeMagnitude scale_factors "0.001*0.0005*0.0" selected_material default_selected spectrum Lagrange
+
+#Write out the first frame
+$jpgFilename = "./output/2DObstacle_0.jpg"
+print "Writing $jpgFilename\n";
+gfx print window 1 jpg file "$jpgFilename" height 1000 width 2000
+	 
+#Read in the sequence of nodal positions.
+for($i=0; $i < 500; $i=$i+1)
+  {
+	 $fluidFilename = sprintf("./output/Fluid/Fluid%d.part0.exnode", $i);
+	 $solidFilename = sprintf("./output/Solid/Solid%d.part0.exnode", $i);
+	 $interfaceFilename = sprintf("./output/Interface/Interface%d.part0.exnode", $i);
+	 print "Reading $fluidFilename time $i\n";
+	 gfx read node "$fluidFilename" region FluidRegion
+	 print "Reading $solidFilename time $i\n";
+	 gfx read node "$solidFilename" region SolidRegion
+	 print "Reading $interfaceFilename time $i\n";
+	 gfx read node "$interfaceFilename" region Interface
+	 $jpgFilename = sprintf("./output/2DObstacle_%d.jpg", $i);
+	 print "Writing $jpgFilename\n";
+	 gfx print window 1 jpg file "$jpgFilename" height 1000 width 2000
+  }
+  
+gfx edit scene
+gfx edit spectrum
+

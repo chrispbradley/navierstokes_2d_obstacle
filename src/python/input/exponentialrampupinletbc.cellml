@@ -1,0 +1,70 @@
+<?xml version='1.0'?>
+<model cmeta:id="InletBC" name="InletBC" xmlns="http://www.cellml.org/cellml/1.1#" xmlns:cellml="http://www.cellml.org/cellml/1.1#" xmlns:cmeta="http://www.cellml.org/metadata/1.0#">
+    <component name="main">
+        <!-- Units -->
+        <units name="per_second">
+            <unit exponent="-1" units="second"/>
+        </units>
+        <units name="metre_per_second">
+            <unit exponent="1" units="metre"/>
+            <unit exponent="-1" units="second"/>
+        </units>
+        <!-- Variables-->
+        <variable name="time" units="second"/>
+        <variable initial_value="0.0" name="x" units="metre"/>
+        <variable initial_value="0.0" name="y" units="metre"/>
+        <variable initial_value="0.5" name="A" units="metre_per_second"/>
+        <variable initial_value="2.0" name="B" units="dimensionless"/>
+        <variable initial_value="0.5" name="C" units="per_second"/>
+        <variable initial_value="0.0" name="dummy" units="metre"/>
+        <variable name="inletx" units="metre_per_second"/>
+        <variable name="inlety" units="metre_per_second"/>
+        <!-- Equations-->
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+                <eq/>
+                <ci>inletx</ci>
+                <apply>
+                    <divide/>
+                    <ci>A</ci>
+                    <apply>
+                        <plus/>
+                        <cn cellml:units="dimensionless">1.0</cn>
+                        <apply>
+                            <exp/>
+                            <apply>
+                                <plus/>
+                                <ci>B</ci>
+                                <apply>
+                                    <times/>
+                                    <ci>C</ci>
+                                    <ci>time</ci>
+                                </apply>
+                            </apply>
+                        </apply>
+                    </apply>
+                </apply>
+            </apply>
+            <apply>
+                <eq/>
+                <ci>inlety</ci>
+                <cn cellml:units="metre_per_second">0.0</cn>
+            </apply>
+            <apply>
+                <eq/>
+                <apply>
+                    <diff/>
+                    <bvar>
+                        <ci>time</ci>
+                    </bvar>
+                    <ci>dummy</ci>
+                </apply>
+                <apply>
+                    <plus/>
+                    <ci>inletx</ci>
+                    <ci>inlety</ci>
+                </apply>
+            </apply>
+        </math>
+    </component>
+</model>
